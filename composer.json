@@ -1,7 +1,33 @@
 {
     "name": "stratease/salesforcery",
-    "description": "A short description of what your package does",
+    "description": "A PHP Salesforce ORM, inspired by Eloquent's API.",
+    "keywords": ["salesforce","php","orm","rest","database","model","client"],
+    "type": "library",
+    "license":"Apache",
+    "version":"0.0.1",
+    "homepage":"https://github.com/stratease/salesforcery",
+    "authors": [
+        {
+            "name": "Edwin Daniels",
+            "homepage": "https://github.com/stratease"
+        }
+    ],
     "require": {
-        "php": "^5.3.3 || ^7.0" 
-    }
+        "php": "7.*",
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Stratease\\Salesforcery\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Stratease\\Salesforcery\\Tests\\": "tests/"
+        }
+    },
+    "prefer-stable": true
 }

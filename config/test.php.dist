@@ -1,0 +1,11 @@
+<?php
+return [
+    'salesforce'=> [
+        'grant_type' => 'password',
+        'client_id' => 'your app ID',
+        'client_secret' => 'your app secret',
+        'username' => 'salesforce@user.com',
+        'password' => 'passowrd+token',
+        'authorization_url' => 'https://test.salesforce.com/'
+    ]
+];
