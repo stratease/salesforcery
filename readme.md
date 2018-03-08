@@ -1,17 +1,17 @@
 
 
 
-#Setup
+# Setup
 Currently only support for OAuth2 `password` grant type. Accepting pull requests for other authorization protocols.
-###1. Setting up a Connected App
+### 1. Setting up a Connected App
 You need to create a [Connected App](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_defining_remote_access_applications.htm) to generate the `client_id` and `client_secret` values for the OAuth2 connection. Once created use the credentials to register a connection.
 
-###2. Installation
+### 2. Installation
 ```bash
 composer require stratease/salesforcery
 ```
 
-###3. Connection
+### 3. Connection
 ```php
 use Stratease\Salesforcery\Salesforce\Connection\REST\Authentication\PasswordAuthentication;
 use Stratease\Salesforcery\Salesforce\Connection\REST\Client;
@@ -46,7 +46,7 @@ $account = Your/Models/Account::findOneBy('Id', 'abc123');
 
 
 
-#Examples
+# Examples
 ### Defining a model
 
 For a simple setup...
@@ -99,9 +99,9 @@ $account2->save();
 $account2->delete();
 
 ```
-#Salesforce
+# Salesforce
 This library uses Salesforces [REST API](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_list.htm). Tested on version 39. 
-#Todo
+# Todo
 - Object relations mapping, i.e. `$contact->phone->isMobile`
 - Add more REST endpoint support
 - Batch REST integration

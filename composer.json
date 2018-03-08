@@ -4,7 +4,7 @@
     "keywords": ["salesforce","php","orm","rest","database","model","client"],
     "type": "library",
     "license":"Apache",
-    "version":"0.0.1",
+    "version":"0.1.0",
     "homepage":"https://github.com/stratease/salesforcery",
     "authors": [
         {
