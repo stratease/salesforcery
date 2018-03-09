@@ -1,5 +1,7 @@
 [![Latest Stable Version](https://poser.pugx.org/stratease/salesforcery/v/stable)](https://packagist.org/packages/stratease/salesforcery) [![Total Downloads](https://poser.pugx.org/stratease/salesforcery/downloads)](https://packagist.org/packages/stratease/salesforcery) [![License](https://poser.pugx.org/stratease/salesforcery/license)](https://packagist.org/packages/stratease/salesforcery)
 
+A PHP ORM for Salesforce client applications, utilizing an OAuth2 REST client. Inspired by [Eloquent's](https://laravel.com/docs/master/eloquent) simple API.
+
 # Setup
 
 ### 1. Setting up a Connected App
