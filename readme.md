@@ -1,8 +1,7 @@
-
-
+[![Latest Stable Version](https://poser.pugx.org/stratease/salesforcery/v/stable)](https://packagist.org/packages/stratease/salesforcery) [![Total Downloads](https://poser.pugx.org/stratease/salesforcery/downloads)](https://packagist.org/packages/stratease/salesforcery) [![License](https://poser.pugx.org/stratease/salesforcery/license)](https://packagist.org/packages/stratease/salesforcery)
 
 # Setup
-Currently only support for OAuth2 `password` grant type. Accepting pull requests for other authorization protocols.
+
 ### 1. Setting up a Connected App
 You need to create a [Connected App](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_defining_remote_access_applications.htm) to generate the `client_id` and `client_secret` values for the OAuth2 connection. Once created use the credentials to register a connection.
 
@@ -23,7 +22,7 @@ $authentication = new PasswordAuthentication([
      'client_id' => 'your app ID',
      'client_secret' => 'your app secret',
      'username' => 'salesforce@user.com',
-     'password' => 'passowrd+token',
+     'password' => 'password+token',
      'authorization_url' => 'https://test.salesforce.com/'
  ]);
 
@@ -106,3 +105,8 @@ This library uses Salesforces [REST API](https://developer.salesforce.com/docs/a
 - Add more REST endpoint support
 - Batch REST integration
 - Object -> field schema cache. As it stands it will request the schema `n * Models` times per run. So if you do a series of requests utilizing `Account` and `User` models, it will request the schema twice, once for each model.
+- Query builder object
+- Look into extended Eloquent more formally.
+- Test with other php versions. Was developed on `7.1`
+- Docker environment for tests. As it stands now tests require a connection to a sandbox environment. Preferred setup for now in order to validate various Salesforce REST protocols are passing muster.  
+- Currently only support for OAuth2 `password` grant type. Accepting pull requests for other authorization protocols.
