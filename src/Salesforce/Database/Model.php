@@ -59,86 +59,6 @@ abstract class Model
         return $instance;
     }
 
-    /**
-     * @param $field
-     * @param $value
-     *
-     * @todo migrate to a query builder object
-     * @return mixed
-     */
-    protected static function q_castQueryValue($field, $value)
-    {
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        } else {
-            return "'" . addslashes($value) . "'";
-        }
-    }
-
-    /**
-     * @param       $selectFields
-     * @param       $objectName
-     * @param array $searchCriteria
-     *
-     * @todo migrate to a query builder object
-     * @return string
-     */
-    protected static function q_buildSelectQuery($selectFields, $objectName, $searchCriteria = [])
-    {
-
-        $query = "SELECT %s FROM %s ";
-        $ands  = [];
-
-        foreach ($searchCriteria as $search) {
-            foreach ($search as $field => $val) {
-                $ands[] = $field . ' = ' . self::q_castQueryValue($field, $val);
-            }
-        }
-
-        if (count($ands)) {
-            $query .= " WHERE " . implode(' AND ', $ands);
-        }
-
-        return sprintf($query,
-            implode(', ', $selectFields),
-            $objectName
-        );
-    }
-
-    /**
-     * @param $search
-     *
-     * @todo migrate to a query builder object
-     * @return array
-     */
-    protected static function q_fetchResults($search)
-    {
-        // get our fields
-        $fields = array_keys(static::getSchema());
-
-        $q = self::q_buildSelectQuery($fields, static::resolveObjectName(), $search);
-        // if searching IsArchived or IsDeleted, fetch from queryAll https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/dome_queryall.htm
-        $queryAll = false;
-        foreach ($search as $filter) {
-            foreach ($filter as $field => $value) {
-                switch ($field) {
-                    case 'IsArchived':
-                    case 'IsDeleted':
-                        $queryAll = true;
-                        break 3;
-                }
-            }
-        }
-
-        $connection = self::$connection;
-        if ($queryAll) {
-            $results = $connection->queryAll($q);
-        } else {
-            $results = $connection->query($q);
-        }
-
-        return $results;
-    }
 
     /**
      * @param $field
@@ -148,20 +68,44 @@ abstract class Model
      */
     public static function findBy()
     {
-        $search = func_get_args();
-        if (func_num_args() == 2) {
-            $args   = func_get_args();
-            $search = [[$args[0] => $args[1]]];
-        }
+        $instance = new static;
+        $args = func_get_args() ? func_get_args() : [[]];
+        $query = call_user_func_array([$instance, 'where'], $args);
 
-        $results = self::q_fetchResults($search);
+        return $query->get();
+    }
 
-        $collection = [];
-        foreach ($results['records'] as $item) {
-            $collection[] = self::hydrateFactory($item);
-        }
 
-        return new Collection($collection);
+    /**
+     * Handle dynamic static method calls into the method.
+     *
+     * @param  string  $method
+     * @param  array  $parameters
+     * @return mixed
+     */
+    public static function __callStatic($method, $parameters)
+    {
+        return (new static)->$method(...$parameters);
+    }
+
+    /**
+     * Convert the model to its string representation.
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->toJson();
+    }
+
+    /**
+     * @return QueryBuilder
+     */
+    public function newQuery()
+    {
+        return (new QueryBuilder(self::$connection))
+            ->from(static::resolveObjectName())
+            ->select(array_keys(static::getSchema()))->setModel($this);
     }
 
     /**
@@ -172,17 +116,10 @@ abstract class Model
      */
     public static function findOneBy()
     {
-        $search = func_get_args();
-        if (func_num_args() == 2) {
-            $args   = func_get_args();
-            $search = [[$args[0] => $args[1]]];
-        }
+        $results = self::findBy(...func_get_args());
+        if(isset($results[0])) {
 
-        $results = self::q_fetchResults($search);
-
-        if (isset($results['records'][0])) {
-
-            return self::hydrateFactory($results['records'][0]);
+            return $results[0];
         }
 
         return null;
@@ -382,7 +319,11 @@ abstract class Model
             return $this;
         }
 
-        return null;
+        if (in_array($name, ['increment', 'decrement'])) {
+            return $this->$name(...$arguments);
+        }
+
+        return $this->newQuery()->$name(...$arguments);
     }
 
     /**

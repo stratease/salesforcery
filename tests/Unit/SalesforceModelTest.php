@@ -40,6 +40,17 @@ class SalesforceModelTest extends TestCase
     /**
      * @test
      */
+    public function can_use_builder_where()
+    {
+        $collection = Account::where('Name', '=', 'Not real name... just want a collection returned')
+            ->get();
+
+        $this->assertInstanceOf(Collection::class, $collection, 'Should have retrieved at least an empty Collection from query builder');
+    }
+
+    /**
+     * @test
+     */
     public function can_see_resource_name()
     {
         $this->assertEquals('Account', Account::resolveObjectName());
