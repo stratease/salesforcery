@@ -201,7 +201,7 @@ class QueryBuilder
         $sqlWheres = [];
         $where     = '';
         foreach ($this->wheres as $where) {
-            $sqlWheres[] = $where[0] . ' ' . $this->operatorAndValueToSql($where[1], $where[2]);
+            $sqlWheres[] = $where[0] . ' ' . $this->operatorAndValueToSql($where[0], $where[1], $where[2]);
         }
         if ($sqlWheres) {
             $where = 'WHERE ' . implode(' AND ', $sqlWheres); // @todo assume AND for now...
@@ -218,18 +218,25 @@ class QueryBuilder
     /**
      * Where the magic happens.
      *
+     * @param $column
      * @param $operator
      * @param $value
      *
      * @return string
      */
-    protected function operatorAndValueToSql($operator, $value)
+    protected function operatorAndValueToSql($column, $operator, $value)
     {
-        // bool
-        if(is_bool($value)) {
-            return $operator." ".(($value) ? 'TRUE' : 'FALSE');
-        }
 
+        $schema = $this->model::getSchema();
+
+        switch($schema[$column]['type']) {
+            case 'boolean':
+                return $operator." ".(($value) ? 'TRUE' : 'FALSE');
+            case 'datetime':
+                return $operator." ".date('c', strtotime($value));
+            case 'date':
+                return $operator." ".date('Y-m-d', strtotime($value));
+        }
 
         return $operator." '". addslashes($value)."'";
     }
