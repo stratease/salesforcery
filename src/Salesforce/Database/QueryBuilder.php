@@ -207,11 +207,18 @@ class QueryBuilder
             $where = 'WHERE ' . implode(' AND ', $sqlWheres); // @todo assume AND for now...
         }
 
+        // limit
+        $limit = '';
+        if($this->limit) {
+            $limit = "LIMIT ".(int)$this->limit;
+        }
+
         return sprintf(
-            "SELECT %s FROM %s %s",
+            "SELECT %s FROM %s %s %s",
             $columns,
             $from,
-            $where
+            $where,
+            $limit
         );
     }
 
@@ -227,7 +234,8 @@ class QueryBuilder
     protected function operatorAndValueToSql($column, $operator, $value)
     {
 
-        $schema = $this->model::getSchema();
+        $model = $this->model;
+        $schema = $model::getSchema();
 
         switch($schema[$column]['type']) {
             case 'boolean':
@@ -253,7 +261,7 @@ class QueryBuilder
         $results =
             array_map(function($result) use ($model) {
                 return $model::hydrateFactory($result);
-            }, $this->runSelect()['records']);
+            }, $this->runSelect());
 
         return new Collection($results);
     }
@@ -284,14 +292,69 @@ class QueryBuilder
     protected function runSelect()
     {
         if ($this->isQueryAll()) {
-            return $this->connection->queryAll(
+            $response = $this->connection->queryAll(
                 $this->toSql()
             );
         } else {
-            return $this->connection->query(
+            $response = $this->connection->query(
                 $this->toSql()
             );
         }
+
+        $records = $response['records'];
+
+        // iterate to get all results
+        while(!$response['done']) {
+            $response = $this->connection->request('GET', $this->connection->authentication->getInstanceUrl().$response['nextRecordsUrl']);
+            $response = json_decode($response->getBody(), true);
+            $records = array_merge($records, $response['records']);
+        }
+
+        return $records;
+    }
+
+    /**
+     * @param          $batchSize
+     * @param callable $closure
+     * @todo $batchSize - not sure how to get this to work with the REST API. Specifying LIMIT will stop further pagination, and the batch header didn't seem to work.... leaving the param here for now
+     * @return bool
+     */
+    public function chunk($batchSize, callable $closure)
+    {
+        $model = $this->model;
+
+        if ($this->isQueryAll()) {
+            $response = $this->connection->queryAll(
+                $this->toSql()
+            );
+        } else {
+            $response = $this->connection->query(
+                $this->toSql()
+            );
+        }
+
+        // first batch...
+        $records = $response['records'];
+        $results =
+            array_map(function($result) use ($model) {
+                return $model::hydrateFactory($result);
+            }, $records);
+        $closure(new Collection($results));
+
+
+        // iterate to get any remaining batches
+        while(!empty($response['nextRecordsUrl'])) {
+            $response = $this->connection->request('GET', $this->connection->authentication->getInstanceUrl() . $response['nextRecordsUrl']);
+            $response = json_decode($response->getBody(), true);
+            $results =
+                array_map(function($result) use ($model) {
+                    return $model::hydrateFactory($result);
+                }, $response['records']);
+
+            $closure(new Collection($results));
+        }
+
+        return true;
     }
 
     /**
@@ -340,7 +403,7 @@ class QueryBuilder
      * @param  mixed  $value
      * @param  string $boolean
      *
-     * @return \Illuminate\Database\Query\Builder|static
+     * @return  QueryBuilder|static
      */
     public function whereDate($column, $operator, $value = null, $boolean = 'and')
     {
@@ -374,7 +437,6 @@ class QueryBuilder
      * Add a "where null" clause to the query.
      *
      * @param  string $column
-     * @param  string $boolean
      * @param  bool   $not
      *
      * @return $this

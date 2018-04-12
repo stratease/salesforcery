@@ -9,7 +9,7 @@ use Stratease\Salesforcery\Salesforce\Connection\REST\Authentication\Authenticat
 
 class Client
 {
-    protected $authentication;
+    public $authentication;
     public $apiVersion;
     public function __construct(AuthenticationInterface $authentication, $apiVersion = '39.0')
     {
@@ -17,16 +17,14 @@ class Client
         $this->apiVersion = $apiVersion;
     }
 
-    public function queryAll($query)
+    public function queryAll($query, array $headers = [])
     {
         $url = $this->authentication->getInstanceUrl()."/services/data/v".$this->apiVersion."/queryAll";
-
+        $headers = array_merge($headers, ['Authorization' => "OAuth " . $this->authentication->getAccessToken()]);
         $client = new GuzzleClient();
         try {
             $request = $client->request('GET', $url, [
-                'headers' => [
-                    'Authorization' => "OAuth " . $this->authentication->getAccessToken()
-                ],
+                'headers' => $headers,
                 'query'   => [
                     'q' => $query
                 ]
@@ -39,16 +37,14 @@ class Client
         return json_decode($request->getBody(), true);
     }
 
-    public function query($query)
+    public function query($query, array $headers = [])
     {
         $url = $this->authentication->getInstanceUrl()."/services/data/v".$this->apiVersion."/query";
-
+        $headers = array_merge($headers, ['Authorization' => "OAuth " . $this->authentication->getAccessToken()]);
         $client = new GuzzleClient();
         try {
             $request = $client->request('GET', $url, [
-                'headers' => [
-                    'Authorization' => "OAuth " . $this->authentication->getAccessToken()
-                ],
+                'headers' => $headers,
                 'query'   => [
                     'q' => $query
                 ]
@@ -116,17 +112,17 @@ class Client
      * @param       $verb
      * @param       $url
      * @param array $params
+     * @param array $headers
      *
      * @return mixed|\Psr\Http\Message\ResponseInterface
      */
-    public function request($verb, $url, $params = []) {
+    public function request($verb, $url, $params = [], $headers = []) {
 
         $client = new GuzzleClient();
+        $headers = array_merge($headers, ['Authorization' => "OAuth ".$this->authentication->getAccessToken(),
+                                          'Content-Type' => 'application/json']);
         return $client->request($verb, $url, [
-            'headers' => [
-                'Authorization' => "OAuth ".$this->authentication->getAccessToken(),
-                'Content-Type' => 'application/json'
-            ],
+            'headers' => $headers,
             'json' => $params
         ]);
 
@@ -141,7 +137,7 @@ class Client
         $status = $response->getStatusCode();
 
         if ($status != 204) {
-            die("Error: call to URL $url failed with status $status, response: " . $request->getReasonPhrase());
+            throw new \Exception("Error: call to URL $url failed with status $status, response: " . $response->getReasonPhrase());
         }
 
         return true;
