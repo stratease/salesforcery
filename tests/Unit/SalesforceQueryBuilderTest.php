@@ -7,13 +7,13 @@
  */
 
 namespace Unit;
+
 use PHPUnit\Framework\TestCase;
 use Stratease\Salesforcery\Salesforce\Connection\REST\Authentication\PasswordAuthentication;
 use Stratease\Salesforcery\Salesforce\Connection\REST\Client;
-use Stratease\Salesforcery\Salesforce\Database\Collection;
 use Stratease\Salesforcery\Salesforce\Database\Model;
-use Stratease\Salesforcery\Tests\Account;
 use Stratease\Salesforcery\Salesforce\Database\QueryBuilder;
+use Stratease\Salesforcery\Tests\Account;
 
 class SalesforceQueryBuilderTest extends TestCase
 {
@@ -28,7 +28,7 @@ class SalesforceQueryBuilderTest extends TestCase
     public static function setUpBeforeClass()
     {
         parent::setUpBeforeClass();
-        $options = require(__DIR__.'/../../config/test.php');
+        $options = require __DIR__ . '/../../config/test.php';
 
         $salesforce = new PasswordAuthentication($options['salesforce']);
         $salesforce->setEndpoint('https://test.salesforce.com/');
@@ -44,12 +44,13 @@ class SalesforceQueryBuilderTest extends TestCase
     public function build_simple_where()
     {
         $builder = new QueryBuilder(self::$client);
+        $builder->setModel(new Account());
         $sql = $builder->where('Name', 'Frank')
             ->select('Name')
-            ->from('User')
+            ->from('Account')
             ->toSql();
 
-        $this->assertEquals('SELECT Name FROM User WHERE Name = \'Frank\'', $sql);
+        $this->assertEquals('SELECT Name FROM Account WHERE Name = \'Frank\'', $sql);
     }
 
     /**
@@ -58,13 +59,14 @@ class SalesforceQueryBuilderTest extends TestCase
     public function build_where_with_array()
     {
         $builder = new QueryBuilder(self::$client);
+        $builder->setModel(new Account());
         $sql = $builder->where(['Name' => 'Frank',
-            'Email' => 'frank@test.com'])
+            'Email'                        => 'frank@test.com'])
             ->select(['Name', 'Email'])
-            ->from('User')
+            ->from('Account')
             ->toSql();
 
-        $this->assertEquals("SELECT Name, Email FROM User WHERE Name = 'Frank' AND Email = 'frank@test.com'", $sql);
+        $this->assertEquals("SELECT Name, Email FROM Account WHERE Name = 'Frank' AND Email = 'frank@test.com'", $sql);
     }
 
     /**
@@ -73,13 +75,14 @@ class SalesforceQueryBuilderTest extends TestCase
     public function build_where_with_operators()
     {
         $builder = new QueryBuilder(self::$client);
+        $builder->setModel(new Account());
         $sql = $builder->where('Name', '!=', 'Frank')
-            ->where('Email','>', 'frank@test.com')
+            ->where('Email', '>', 'frank@test.com')
             ->select(['Name', 'Email'])
-            ->from('User')
+            ->from('Account')
             ->toSql();
 
-        $this->assertEquals("SELECT Name, Email FROM User WHERE Name != 'Frank' AND Email > 'frank@test.com'", $sql);
+        $this->assertEquals("SELECT Name, Email FROM Account WHERE Name != 'Frank' AND Email > 'frank@test.com'", $sql);
     }
 
 }

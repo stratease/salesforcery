@@ -57,7 +57,7 @@ class QueryBuilder
      */
     public $columns = [];
 
-    function __construct(Client $connection)
+    public function __construct(Client $connection)
     {
         $this->connection = $connection;
     }
@@ -88,7 +88,7 @@ class QueryBuilder
         }
 
         // assumed = operator for 2 args
-        if(func_num_args() == 2 ){
+        if (func_num_args() == 2) {
             list($operator, $value) = array('=', $operator);
         }
 
@@ -169,7 +169,7 @@ class QueryBuilder
      */
     public function limit($value)
     {
-        $this->limit = (int)$value;
+        $this->limit = (int) $value;
 
         return $this;
     }
@@ -183,7 +183,6 @@ class QueryBuilder
     {
         return $this->compileSelect();
     }
-
 
     /**
      * @return string
@@ -209,17 +208,17 @@ class QueryBuilder
 
         // limit
         $limit = '';
-        if($this->limit) {
-            $limit = "LIMIT ".(int)$this->limit;
+        if ($this->limit) {
+            $limit = "LIMIT " . (int) $this->limit;
         }
 
-        return sprintf(
+        return trim(sprintf(
             "SELECT %s FROM %s %s %s",
             $columns,
             $from,
             $where,
             $limit
-        );
+        ));
     }
 
     /**
@@ -235,18 +234,19 @@ class QueryBuilder
     {
 
         $model = $this->model;
+
         $schema = $model::getSchema();
 
-        switch($schema[$column]['type']) {
+        switch ($schema[$column]['type']) {
             case 'boolean':
-                return $operator." ".(($value) ? 'TRUE' : 'FALSE');
+                return $operator . " " . (($value) ? 'TRUE' : 'FALSE');
             case 'datetime':
-                return $operator." ".date('c', strtotime($value));
+                return $operator . " " . date('c', strtotime($value));
             case 'date':
-                return $operator." ".date('Y-m-d', strtotime($value));
+                return $operator . " " . date('Y-m-d', strtotime($value));
         }
 
-        return $operator." '". addslashes($value)."'";
+        return $operator . " '" . addslashes($value) . "'";
     }
 
     /**
@@ -259,9 +259,9 @@ class QueryBuilder
         $model = $this->model;
 
         $results =
-            array_map(function($result) use ($model) {
-                return $model::hydrateFactory($result);
-            }, $this->runSelect());
+            array_map(function ($result) use ($model) {
+            return $model::hydrateFactory($result);
+        }, $this->runSelect());
 
         return new Collection($results);
     }
@@ -304,10 +304,10 @@ class QueryBuilder
         $records = $response['records'];
 
         // iterate to get all results
-        while(!$response['done']) {
-            $response = $this->connection->request('GET', $this->connection->authentication->getInstanceUrl().$response['nextRecordsUrl']);
+        while (!$response['done']) {
+            $response = $this->connection->request('GET', $this->connection->authentication->getInstanceUrl() . $response['nextRecordsUrl']);
             $response = json_decode($response->getBody(), true);
-            $records = array_merge($records, $response['records']);
+            $records  = array_merge($records, $response['records']);
         }
 
         return $records;
@@ -336,20 +336,19 @@ class QueryBuilder
         // first batch...
         $records = $response['records'];
         $results =
-            array_map(function($result) use ($model) {
-                return $model::hydrateFactory($result);
-            }, $records);
+            array_map(function ($result) use ($model) {
+            return $model::hydrateFactory($result);
+        }, $records);
         $closure(new Collection($results));
 
-
         // iterate to get any remaining batches
-        while(!empty($response['nextRecordsUrl'])) {
+        while (!empty($response['nextRecordsUrl'])) {
             $response = $this->connection->request('GET', $this->connection->authentication->getInstanceUrl() . $response['nextRecordsUrl']);
             $response = json_decode($response->getBody(), true);
-            $results =
-                array_map(function($result) use ($model) {
-                    return $model::hydrateFactory($result);
-                }, $response['records']);
+            $results  =
+                array_map(function ($result) use ($model) {
+                return $model::hydrateFactory($result);
+            }, $response['records']);
 
             $closure(new Collection($results));
         }
@@ -473,7 +472,7 @@ class QueryBuilder
     public function addSelect($column)
     {
         $column        = is_array($column) ? $column : func_get_args();
-        $this->columns = array_merge((array)$this->columns, $column);
+        $this->columns = array_merge((array) $this->columns, $column);
 
         return $this;
     }
@@ -492,7 +491,4 @@ class QueryBuilder
         return $this;
     }
 
-
-
-    
 }
